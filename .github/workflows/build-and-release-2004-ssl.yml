@@ -1,0 +1,69 @@
+name: Build and Release 2004-ssl
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-nginx:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Verify Docker availability
+      run: docker --version
+
+    - name: Build Nginx with statically linked OpenSSL 1.1.1u
+      run: |
+        docker run --rm -v $PWD:/build -w /build ubuntu:20.04 bash -c "
+          set -e
+          apt update &&
+          DEBIAN_FRONTEND=noninteractive apt install -y \
+            build-essential \
+            libpcre3 libpcre3-dev \
+            zlib1g zlib1g-dev \
+            wget curl ca-certificates &&
+          
+          # 下载并解压 OpenSSL 1.1.1u
+          curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
+          tar -zxvf openssl-1.1.1u.tar.gz &&
+          
+          # 下载并解压 Nginx
+          curl -LO http://nginx.org/download/nginx-1.25.3.tar.gz &&
+          tar -zxvf nginx-1.25.3.tar.gz &&
+          
+          cd nginx-1.25.3 &&
+          ./configure --prefix=/opt/nginx \
+            --with-http_ssl_module \
+            --with-http_v2_module \
+            --with-http_gzip_static_module \
+            --with-pcre \
+            --with-openssl=../openssl-1.1.1u \
+            --with-openssl-opt=no-shared &&
+          make -j\$(nproc) &&
+          make install &&
+          
+          mkdir -p /build/output &&
+          cp -r /opt/nginx /build/output/nginx
+        "
+
+    - name: Package build output
+      run: |
+        tar -czvf nginx-build.tar.gz output
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: nginx-1.25.3-ssl
+        name: "Nginx 1.25.3 Build (Static OpenSSL 1.1.1u)"
+        body: |
+          ✅ Built inside Ubuntu 20.04 container  
+          ✅ Statically linked with OpenSSL 1.1.1u  
+          ✅ Includes HTTP/2, Gzip, and PCRE  
+          ✅ Compatible with QNAP, Ubuntu 20.04+, Debian 10/11, and systems without libssl.so.1.1
+        files: nginx-build.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
