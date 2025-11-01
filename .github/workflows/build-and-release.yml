@@ -1,4 +1,4 @@
-name: Build and Release Nginx
+name: Build and Release Nginx (Static OpenSSL)
 
 on:
   workflow_dispatch:
@@ -16,21 +16,32 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev wget
+        sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev wget
+
+    - name: Build OpenSSL (static)
+      run: |
+        wget https://www.openssl.org/source/openssl-3.0.12.tar.gz -O openssl.tar.gz
+        tar -zxvf openssl.tar.gz
+        cd openssl-3.0.12
+        ./config --prefix=$HOME/openssl --openssldir=$HOME/openssl no-shared
+        make -j$(nproc)
+        make install_sw
 
     - name: Download Nginx source
       run: |
         wget http://nginx.org/download/nginx-1.25.3.tar.gz -O nginx.tar.gz
         tar -zxvf nginx.tar.gz
 
-    - name: Configure and build
+    - name: Configure and build Nginx (with static OpenSSL)
       working-directory: ./nginx-1.25.3
       run: |
         ./configure --prefix=/opt/nginx \
           --with-http_ssl_module \
           --with-http_v2_module \
           --with-http_gzip_static_module \
-          --with-pcre
+          --with-pcre \
+          --with-openssl=$HOME/openssl \
+          --with-openssl-opt=no-shared
         make -j$(nproc)
 
     - name: Package build output
@@ -43,8 +54,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: nginx-1.25.3
-        name: "Nginx 1.25.3 Build"
-        body: "Auto-built Nginx from source with SSL, HTTP/2, Gzip, and PCRE support."
+        name: "Nginx 1.25.3 Build (Static OpenSSL)"
+        body: "Auto-built Nginx from source with statically linked OpenSSL 3.0.12, HTTP/2, Gzip, and PCRE support."
         files: nginx-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
