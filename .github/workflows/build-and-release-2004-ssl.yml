@@ -1,4 +1,4 @@
-name: Build and Release for Legacy Systems
+name: Build and Release for QNAP Legacy
 
 on:
   workflow_dispatch:
@@ -13,23 +13,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Build Nginx inside Ubuntu 18.04 container (glibc 2.27)
+    - name: Build Nginx inside Ubuntu 16.04 container (glibc 2.23)
       run: |
-        docker run --rm -v $PWD:/build -w /build ubuntu:18.04 bash -c "
+        docker run --rm -v $PWD:/build -w /build ubuntu:16.04 bash -c "
           set -e
           apt update &&
           DEBIAN_FRONTEND=noninteractive apt install -y \
             build-essential \
             libpcre3 libpcre3-dev \
             zlib1g zlib1g-dev \
-            libssl1.1 libssl-dev \
-            wget curl ca-certificates &&
+            libssl-dev wget curl ca-certificates &&
           
-          # 下载并解压 OpenSSL 1.1.1u
           curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
           tar -zxvf openssl-1.1.1u.tar.gz &&
           
-          # 下载并解压 Nginx
           curl -LO http://nginx.org/download/nginx-1.25.3.tar.gz &&
           tar -zxvf nginx-1.25.3.tar.gz &&
           
@@ -55,14 +52,13 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: nginx-1.25.3-legacy
-        name: "Nginx 1.25.3 Build (Ubuntu 18.04)"
+        tag_name: nginx-1.25.3-qnap
+        name: "Nginx 1.25.3 Build (Ubuntu 16.04)"
         body: |
-          ✅ Built inside Ubuntu 18.04 container (glibc 2.27)  
+          ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
           ✅ Statically linked with OpenSSL 1.1.1u  
-          ✅ Includes HTTP/2, Gzip, and PCRE  
-          ✅ Compatible with QNAP NAS, Debian 9/10, Ubuntu 18.04+, and other legacy systems  
-          ✅ No runtime dependency on libssl.so.1.1 or libcrypt.so.1
+          ✅ Compatible with QNAP NAS, Debian 8/9, Ubuntu 16.04+, and other legacy systems  
+          ✅ No runtime dependency on libssl.so.1.1 or glibc ≥ 2.25
         files: nginx-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
