@@ -1,0 +1,50 @@
+name: Build and Release Nginx
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-nginx:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev wget
+
+    - name: Download Nginx source
+      run: |
+        wget http://nginx.org/download/nginx-1.25.3.tar.gz -O nginx.tar.gz
+        tar -zxvf nginx.tar.gz
+
+    - name: Configure and build
+      working-directory: ./nginx-1.25.3
+      run: |
+        ./configure --prefix=/opt/nginx \
+          --with-http_ssl_module \
+          --with-http_v2_module \
+          --with-http_gzip_static_module \
+          --with-pcre
+        make -j$(nproc)
+
+    - name: Package build output
+      run: |
+        mkdir -p output
+        cp -r nginx-1.25.3/objs output/nginx
+        tar -czvf nginx-build.tar.gz output
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: nginx-1.25.3
+        name: "Nginx 1.25.3 Build"
+        body: "Auto-built Nginx from source with SSL, HTTP/2, Gzip, and PCRE support."
+        files: nginx-build.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
