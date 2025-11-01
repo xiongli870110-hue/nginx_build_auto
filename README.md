@@ -12,7 +12,9 @@
 
 包含内容：
 
-output/ └── nginx/ └── nginx # 编译后的可执行文件
+output/ 
+   └── nginx/ 
+      └── nginx # 编译后的可执行文件
 
 
 ---
