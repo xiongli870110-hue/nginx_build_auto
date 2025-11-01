@@ -18,14 +18,14 @@ jobs:
         sudo apt update
         sudo apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev wget
 
-    - name: Build OpenSSL (static)
+    - name: Download and build OpenSSL (static)
       run: |
         wget https://www.openssl.org/source/openssl-3.0.12.tar.gz -O openssl.tar.gz
         tar -zxvf openssl.tar.gz
-        cd openssl-3.0.12
-        ./config --prefix=$HOME/openssl --openssldir=$HOME/openssl no-shared
+        mv openssl-3.0.12 openssl-src
+        cd openssl-src
+        ./config no-shared
         make -j$(nproc)
-        make install_sw
 
     - name: Download Nginx source
       run: |
@@ -40,7 +40,7 @@ jobs:
           --with-http_v2_module \
           --with-http_gzip_static_module \
           --with-pcre \
-          --with-openssl=$HOME/openssl \
+          --with-openssl=../openssl-src \
           --with-openssl-opt=no-shared
         make -j$(nproc)
 
