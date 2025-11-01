@@ -23,11 +23,13 @@ jobs:
             libpcre3 libpcre3-dev \
             zlib1g zlib1g-dev \
             libssl1.1 libssl-dev \
-            libcrypt1 wget curl ca-certificates &&
+            wget curl ca-certificates &&
           
+          # 下载并解压 OpenSSL 1.1.1u
           curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
           tar -zxvf openssl-1.1.1u.tar.gz &&
           
+          # 下载并解压 Nginx
           curl -LO http://nginx.org/download/nginx-1.25.3.tar.gz &&
           tar -zxvf nginx-1.25.3.tar.gz &&
           
@@ -58,6 +60,7 @@ jobs:
         body: |
           ✅ Built inside Ubuntu 18.04 container (glibc 2.27)  
           ✅ Statically linked with OpenSSL 1.1.1u  
+          ✅ Includes HTTP/2, Gzip, and PCRE  
           ✅ Compatible with QNAP NAS, Debian 9/10, Ubuntu 18.04+, and other legacy systems  
           ✅ No runtime dependency on libssl.so.1.1 or libcrypt.so.1
         files: nginx-build.tar.gz
