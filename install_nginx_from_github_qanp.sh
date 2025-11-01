@@ -58,8 +58,19 @@ echo "[nginx-install] 创建日志文件..."
 touch "$LOG_DIR/access.log"
 touch "$LOG_DIR/error.log"
 
+# 自动选择系统存在的用户（优先 httpdusr > admin > raker）
+for U in httpdusr admin raker; do
+  if id "$U" >/dev/null 2>&1; then
+    NGINX_USER="$U"
+    break
+  fi
+done
+NGINX_USER=${NGINX_USER:-admin}
+
 echo "[nginx-install] 创建默认配置文件 nginx.conf..."
 cat > "$CONF_DIR/nginx.conf" <<EOF
+user $NGINX_USER;
+
 worker_processes  1;
 
 events {
