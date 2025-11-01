@@ -1,4 +1,4 @@
-name: Build and Release 20.04
+name: Build and Release 2004
 
 on:
   workflow_dispatch:
@@ -13,16 +13,18 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install Docker
-      run: |
-        sudo apt update
-        sudo apt install -y docker.io
+    - name: Verify Docker availability
+      run: docker --version
 
     - name: Build Nginx inside Ubuntu 20.04 container
       run: |
         docker run --rm -v $PWD:/build -w /build ubuntu:20.04 bash -c "
           apt update &&
-          apt install -y build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev wget &&
+          DEBIAN_FRONTEND=noninteractive apt install -y \
+            build-essential \
+            libpcre3 libpcre3-dev \
+            zlib1g zlib1g-dev \
+            libssl-dev wget &&
           wget http://nginx.org/download/nginx-1.25.3.tar.gz -O nginx.tar.gz &&
           tar -zxvf nginx.tar.gz &&
           cd nginx-1.25.3 &&
@@ -45,7 +47,10 @@ jobs:
       with:
         tag_name: nginx-1.25.3
         name: "Nginx 1.25.3 Build (Ubuntu 20.04)"
-        body: "Built inside Ubuntu 20.04 container to ensure glibc compatibility. Includes SSL, HTTP/2, Gzip, and PCRE."
+        body: |
+          ✅ Built inside Ubuntu 20.04 container to ensure glibc compatibility  
+          ✅ Includes SSL, HTTP/2, Gzip, and PCRE  
+          ✅ Compatible with QNAP, Ubuntu 20.04, Debian 10/11, and other legacy systems
         files: nginx-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
