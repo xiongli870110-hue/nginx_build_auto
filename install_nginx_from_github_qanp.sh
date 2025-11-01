@@ -59,7 +59,7 @@ touch "$LOG_DIR/access.log"
 touch "$LOG_DIR/error.log"
 
 # 自动选择系统存在的用户（优先 httpdusr > admin > raker）
-for U in httpdusr admin raker; do
+for U in guest admin ubuntu; do
   if id "$U" >/dev/null 2>&1; then
     NGINX_USER="$U"
     break
