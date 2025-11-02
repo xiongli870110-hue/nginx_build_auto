@@ -1,7 +1,8 @@
 # 🚀 Nginx Build Auto
 
 自动从官方源码构建 Nginx，并上传到 GitHub Releases。构建版本包含常用模块，适用于嵌入式设备、自定义部署或轻量级环境（如 QNAP NAS）。
-
+做这个项目的目的是为了在自用的威联通NAS上搭建个人博客，由于威联通NAS的重启后重置/etc/目录，无法通过常规方法安装nginx,故采用此方法，已通过一些办法释放了威联通系统占用的80、443端口，安装此nginx后通过域名成功访问部署在NAS上的个人博客，very nice! 经过测试，在其它Ubuntu系统上也是完美安装。如果你用的Linux系统比较老旧，建议采用
+install_nginx_from_github_qanp.sh进行安装。
 ---
 
 # ⭐️ 安装 Nginx 如此简单
