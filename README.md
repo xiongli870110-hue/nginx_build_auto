@@ -4,16 +4,19 @@
 
 ---
 
-*** 安装nginx如此简单 ***
+# ⭐️ 安装 Nginx 如此简单
 
-进入主机输入的命令如下：
+## 🧭 步骤一：进入主机并执行以下命令
+
+```bash
 sudo -i
 cd /tmp
 nano install_nginx_from_github_qanp.sh
 chmod +x ./install_nginx_from_github_qanp.sh
 ./install_nginx_from_github_qanp.sh
 
-会自动执行，成功的后输出以下信息：
+⚙️ 安装过程输出示例
+
 [nginx-install] 主程序位置识别为：/tmp/nginx-build/output/nginx/sbin
 [nginx-install] 安装到 /opt/nginx...
 [nginx-install] 创建软链接...
@@ -28,16 +31,18 @@ nginx: configuration file /opt/nginx/conf/nginx.conf test is successful
 [nginx-install] 启动 nginx...
 [nginx-install] 安装完成 ✅
 
-自己动手再测试一下：
+🧪 步骤二：验证安装是否成功
+
 root@instance-20250825-032000:/tmp# which nginx
 /usr/local/bin/nginx
+
 root@instance-20250825-032000:/tmp# nginx -t
 nginx: the configuration file /opt/nginx/conf/nginx.conf syntax is ok
 nginx: configuration file /opt/nginx/conf/nginx.conf test is successful
 
-浏览器打开你的ip地址，能看看测试网页：
-Welcome to nginx @ instance-20250825-032000
+🌐 步骤三：打开浏览器访问你的 IP 地址
 
+Welcome to nginx @ instance-20250825-032000
 
 
 ## 📦 构建产物
