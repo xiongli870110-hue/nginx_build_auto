@@ -1,0 +1,51 @@
+name: Build and Release v2rayA_missdat
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-v2raya:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Prepare build directory
+      run: |
+        mkdir -p bundle/v2ray-core
+
+    - name: Download v2rayA binary
+      run: |
+        wget -O bundle/v2raya_linux_x64_2.2.7.3 https://github.com/v2rayA/v2rayA/releases/download/v2.2.7.3/v2raya-linux-amd64
+
+    - name: Download v2ray-core binary
+      run: |
+        wget -O bundle/v2ray-core/v2ray https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip
+        unzip -o bundle/v2ray-core/v2ray -d bundle/v2ray-core
+        mv bundle/v2ray-core/v2ray bundle/v2ray-core/v2ray-core
+
+    - name: Download geoip.dat and geosite.dat
+      run: |
+        wget -O bundle/v2ray-core/geoip.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat
+        wget -O bundle/v2ray-core/geosite.dat https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+
+    - name: Package bundle
+      run: |
+        tar -czvf v2rayA-bundle.tar.gz -C bundle .
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v2rayA-bundle-v2.2.7.3
+        name: "v2rayA Bundle v2.2.7.3"
+        body: |
+          ✅ Includes v2rayA binary  
+          ✅ Includes v2ray-core binary  
+          ✅ Includes geoip.dat and geosite.dat  
+          ✅ Compatible with offline installation scripts
+        files: v2rayA-bundle.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
