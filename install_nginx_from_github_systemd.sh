@@ -18,7 +18,7 @@ UNPACK_DIR=/tmp/nginx-build
 
 # Check for local package in script directory
 if [ -f "$RELEASE_LOCAL" ]; then
-  echo "[nginx-install] Found nginx-build.tar.gz next to script ✅"
+  echo "[nginx-install] Found nginx-build.tar.gz next to script ?"
 else
   echo "[nginx-install] Downloading nginx-build.tar.gz to script directory..."
   wget -O "$RELEASE_LOCAL" "$RELEASE_URL"
@@ -33,7 +33,7 @@ tar -zxvf "$RELEASE_LOCAL" -C "$UNPACK_DIR"
 FOUND_NGINX=$(find "$UNPACK_DIR" -type f -name nginx -executable | head -n 1)
 
 if [ -z "$FOUND_NGINX" ]; then
-  echo "[error] Nginx binary not found, installation failed ❌"
+  echo "[error] Nginx binary not found, installation failed ?"
   exit 1
 fi
 
@@ -47,7 +47,7 @@ cp -r "$FOUND_DIR"/* "$INSTALL_DIR/"
 
 # Verify installation
 if [ ! -f "$INSTALL_DIR/nginx" ]; then
-  echo "[error] Nginx binary missing after install ❌"
+  echo "[error] Nginx binary missing after install ?"
   exit 1
 fi
 
@@ -145,4 +145,4 @@ systemctl daemon-reload
 systemctl enable nginx-custom.service
 systemctl start nginx-custom.service
 
-echo "[nginx-install] ✅ Nginx installation and autostart setup complete"
+echo "[nginx-install] ? Nginx installation and autostart setup complete"
