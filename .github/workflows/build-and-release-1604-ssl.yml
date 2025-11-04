@@ -1,4 +1,4 @@
-name: Build and Release Ubuntu_1604
+name: Build Nginx and Release Ubuntu_1604
 
 on:
   workflow_dispatch:
