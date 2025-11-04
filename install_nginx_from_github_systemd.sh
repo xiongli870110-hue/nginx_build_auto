@@ -3,27 +3,31 @@ set -e
 
 echo "[nginx-install] Starting Nginx installation (precompiled package)..."
 
+# Get the current script directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 INSTALL_DIR=/opt/nginx
 CONF_DIR=$INSTALL_DIR/conf
 LOG_DIR=$INSTALL_DIR/logs
 SSL_DIR=$INSTALL_DIR/ssl
 HTML_DIR=$INSTALL_DIR/html
-RELEASE_URL=https://github.com/xiongli870110-hue/nginx_build_auto/releases/download/nginx-1.25.3-qnap/nginx-build.tar.gz
-RELEASE_TMP=/tmp/nginx-build.tar.gz
+RELEASE_NAME=nginx-build.tar.gz
+RELEASE_URL=https://github.com/xiongli870110-hue/nginx_build_auto/releases/download/nginx-1.25.3-qnap/${RELEASE_NAME}
+RELEASE_LOCAL="${SCRIPT_DIR}/${RELEASE_NAME}"
 UNPACK_DIR=/tmp/nginx-build
 
-# Download precompiled package if missing
-if [ -f "$RELEASE_TMP" ]; then
-  echo "[nginx-install] Local nginx-build.tar.gz found, skipping download ✅"
+# Check for local package in script directory
+if [ -f "$RELEASE_LOCAL" ]; then
+  echo "[nginx-install] Found nginx-build.tar.gz next to script ✅"
 else
-  echo "[nginx-install] Downloading precompiled package..."
-  wget -O "$RELEASE_TMP" "$RELEASE_URL"
+  echo "[nginx-install] Downloading nginx-build.tar.gz to script directory..."
+  wget -O "$RELEASE_LOCAL" "$RELEASE_URL"
 fi
 
 echo "[nginx-install] Extracting package..."
 rm -rf "$UNPACK_DIR"
 mkdir -p "$UNPACK_DIR"
-tar -zxvf "$RELEASE_TMP" -C "$UNPACK_DIR"
+tar -zxvf "$RELEASE_LOCAL" -C "$UNPACK_DIR"
 
 # Locate nginx binary
 FOUND_NGINX=$(find "$UNPACK_DIR" -type f -name nginx -executable | head -n 1)
@@ -115,7 +119,7 @@ echo "<h1>Welcome to nginx @ $(hostname)</h1>" > "$HTML_DIR/index.html"
 echo "[nginx-install] Validating configuration..."
 "$INSTALL_DIR/nginx" -t
 
-echo "[nginx-install] Starting nginx..."
+echo "[nginx-install] Starting nginx manually..."
 "$INSTALL_DIR/nginx"
 
 ### === Add systemd autostart === ###
