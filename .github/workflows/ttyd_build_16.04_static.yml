@@ -24,10 +24,17 @@ jobs:
             curl ca-certificates \
             zlib1g-dev \
             libuv1-dev \
-            cmake \
             pkg-config &&
 
-          # Build OpenSSL (static)
+          # 安装 CMake 3.27.9
+          curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
+          tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
+          mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
+          ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
+          export PATH=/opt/cmake/bin:\$PATH &&
+          cmake --version &&
+
+          # 构建 OpenSSL 静态库
           curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
           tar -xzf openssl-1.1.1u.tar.gz &&
           cd openssl-1.1.1u &&
@@ -36,7 +43,7 @@ jobs:
           make install &&
           cd /build &&
 
-          # Build json-c (static)
+          # 构建 json-c 静态库
           curl -LO https://s3.amazonaws.com/json-c_releases/releases/json-c-0.17.tar.gz &&
           tar -xzf json-c-0.17.tar.gz &&
           cd json-c-0.17 &&
@@ -46,7 +53,7 @@ jobs:
           make install &&
           cd /build &&
 
-          # Build libwebsockets (static)
+          # 构建 libwebsockets 静态库
           git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
           cd libwebsockets &&
           mkdir build && cd build &&
@@ -62,7 +69,7 @@ jobs:
           make install &&
           cd /build &&
 
-          # Build ttyd (fully static)
+          # 构建 ttyd 静态版本
           git clone https://github.com/tsl0922/ttyd.git &&
           cd ttyd &&
           mkdir build && cd build &&
