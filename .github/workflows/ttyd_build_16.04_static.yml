@@ -82,9 +82,18 @@ jobs:
           make install &&
           cd /build &&
 
-          # 克隆 ttyd 并精准 patch target_link_libraries 行
+          # 克隆 ttyd 并彻底覆盖 target_link_libraries 行
           git clone https://github.com/tsl0922/ttyd.git &&
-          sed -i 's|target_link_libraries(ttyd PRIVATE .*websockets_shared.*)|target_link_libraries(ttyd PRIVATE /opt/libwebsockets/lib/libwebsockets.a /opt/libuv/lib/libuv.a /opt/json-c/lib/libjson-c.a /opt/openssl/lib/libssl.a /opt/openssl/lib/libcrypto.a /usr/lib/x86_64-linux-gnu/libz.a pthread)|' ttyd/CMakeLists.txt &&
+          sed -i '/target_link_libraries(ttyd PRIVATE /c\
+target_link_libraries(ttyd PRIVATE \
+  /opt/libwebsockets/lib/libwebsockets.a \
+  /opt/libuv/lib/libuv.a \
+  /opt/json-c/lib/libjson-c.a \
+  /opt/openssl/lib/libssl.a \
+  /opt/openssl/lib/libcrypto.a \
+  /usr/lib/x86_64-linux-gnu/libz.a \
+  pthread)' ttyd/CMakeLists.txt &&
+          grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
           cd ttyd &&
           mkdir build && cd build &&
           export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
