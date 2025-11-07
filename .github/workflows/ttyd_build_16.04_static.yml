@@ -62,10 +62,9 @@ jobs:
           ./configure --prefix=/opt/libuv --disable-shared --enable-static &&
           make -j\$(nproc) &&
           make install &&
-          export PKG_CONFIG_PATH=/opt/libuv/lib/pkgconfig:\$PKG_CONFIG_PATH &&
           cd /build &&
 
-          # 构建 libwebsockets 静态库
+          # 构建 libwebsockets 静态库（显式传入 libuv 路径）
           git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
           cd libwebsockets &&
           mkdir build && cd build &&
@@ -76,7 +75,9 @@ jobs:
                    -DLWS_WITH_LIBUV=ON \
                    -DOPENSSL_ROOT_DIR=/opt/openssl \
                    -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
-                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a &&
+                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
+                   -DLIBUV_INCLUDE_DIRS=/opt/libuv/include \
+                   -DLIBUV_LIBRARIES=/opt/libuv/lib/libuv.a &&
           make -j\$(nproc) &&
           make install &&
           cd /build &&
