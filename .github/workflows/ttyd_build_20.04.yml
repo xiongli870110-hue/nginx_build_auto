@@ -1,4 +1,4 @@
-name: Build ttyd and Release Ubuntu_1604
+name: Build ttyd and Release Ubuntu_2004
 
 on:
   workflow_dispatch:
@@ -13,9 +13,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Build ttyd inside Ubuntu 16.04 container (glibc 2.23)
+    - name: Build ttyd inside Ubuntu 20.04 container (glibc 2.31)
       run: |
-        docker run --rm -v $PWD:/build -w /build ubuntu:16.04 bash -c "
+        docker run --rm -v $PWD:/build -w /build ubuntu:20.04 bash -c "
           set -e
           apt update &&
           DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -45,12 +45,12 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ttyd-1.7.4-qnap
-        name: "ttyd 1.7.4 Build (Ubuntu 16.04)"
+        name: "ttyd 1.7.4 Build (Ubuntu 20.04)"
         body: |
-          ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
-          ✅ Compatible with QNAP NAS, Debian 8/9, Ubuntu 16.04+, and other legacy systems  
-          ✅ No runtime dependency on glibc ≥ 2.25  
-          ✅ Statically linked with libwebsockets and json-c
+          ✅ Built inside Ubuntu 20.04 container (glibc 2.31)  
+          ✅ Compatible with QNAP NAS, Debian 10+, Ubuntu 20.04+, and modern systems  
+          ✅ Statically linked with libwebsockets and json-c  
+          ⚠️ Not compatible with glibc < 2.25
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
