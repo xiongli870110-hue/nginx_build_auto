@@ -44,7 +44,7 @@ jobs:
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
                    -DLWS_WITH_STATIC=ON \
-                   -DLWS_WITH_SHARED=OFF \
+                   -DLWS_WITH_SHARED=ON \
                    -DLWS_WITH_SSL=ON \
                    -DLWS_WITH_LIBUV=ON \
                    -DOPENSSL_ROOT_DIR=/opt/openssl &&
@@ -57,9 +57,7 @@ jobs:
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
                    -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
-                   -DOPENSSL_ROOT_DIR=/opt/openssl \
-                   -DUSE_LIBUV=OFF \
-                   -DUSE_MBEDTLS=OFF &&
+                   -DOPENSSL_ROOT_DIR=/opt/openssl &&
           make -j\$(nproc) &&
           make install &&
 
@@ -81,7 +79,7 @@ jobs:
           ✅ Compatible with QNAP NAS, Debian 8/9, Ubuntu 16.04+, and other legacy systems  
           ✅ Statically linked with OpenSSL 1.1.1u and libwebsockets 4.3.2  
           ✅ No runtime dependency on glibc ≥ 2.25  
-          ✅ libuv support disabled for compatibility
+          ✅ libuv support enabled, mbedtls disabled
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
