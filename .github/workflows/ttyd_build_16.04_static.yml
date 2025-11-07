@@ -25,12 +25,9 @@ jobs:
             zlib1g-dev \
             libuv1-dev \
             cmake \
-            autoconf \
-            automake \
-            libtool \
             pkg-config &&
 
-          # 构建 OpenSSL 静态库
+          # Build OpenSSL (static)
           curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
           tar -xzf openssl-1.1.1u.tar.gz &&
           cd openssl-1.1.1u &&
@@ -39,16 +36,17 @@ jobs:
           make install &&
           cd /build &&
 
-          # 构建 json-c 静态库
-          git clone https://github.com/json-c/json-c.git &&
-          cd json-c &&
-          sh autogen.sh &&
-          ./configure --prefix=/opt/json-c --disable-shared --enable-static &&
+          # Build json-c (static)
+          curl -LO https://s3.amazonaws.com/json-c_releases/releases/json-c-0.17.tar.gz &&
+          tar -xzf json-c-0.17.tar.gz &&
+          cd json-c-0.17 &&
+          mkdir build && cd build &&
+          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/json-c -DBUILD_SHARED_LIBS=OFF &&
           make -j\$(nproc) &&
           make install &&
           cd /build &&
 
-          # 构建 libwebsockets 静态库
+          # Build libwebsockets (static)
           git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
           cd libwebsockets &&
           mkdir build && cd build &&
@@ -64,7 +62,7 @@ jobs:
           make install &&
           cd /build &&
 
-          # 构建 ttyd 静态版本
+          # Build ttyd (fully static)
           git clone https://github.com/tsl0922/ttyd.git &&
           cd ttyd &&
           mkdir build && cd build &&
@@ -99,7 +97,7 @@ jobs:
           ✅ Fully statically linked — no runtime dependency on libwebsockets, libuv, OpenSSL, json-c, or zlib  
           ✅ Compatible with QNAP NAS, Alpine, BusyBox, and other minimal systems  
           ✅ libuv support enabled, mbedtls disabled  
-          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2 + json-c (static)
+          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2 + json-c 0.17
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
