@@ -82,19 +82,17 @@ jobs:
           make install &&
           cd /build &&
 
-          # 克隆 ttyd 并 patch 顶层 CMakeLists.txt，移除 websockets_shared
+          # 克隆 ttyd 并 patch 顶层 CMakeLists.txt（可选）
           git clone https://github.com/tsl0922/ttyd.git &&
-          sed -i 's/websockets_shared/\/opt\/libwebsockets\/lib\/libwebsockets.a/g' ttyd/CMakeLists.txt &&
-          grep websockets_shared ttyd/CMakeLists.txt || echo '✅ Patch applied successfully' &&
           cd ttyd &&
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
-                   -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
-                   -DLIBWEBSOCKETS_LIBRARIES=/opt/libwebsockets/lib/libwebsockets.a \
+                   -DCMAKE_DISABLE_FIND_PACKAGE_libwebsockets=TRUE \
+                   -DLIBWEBSOCKETS_LIBRARIES=\"/opt/libwebsockets/lib/libwebsockets.a;/opt/libuv/lib/libuv.a;/opt/json-c/lib/libjson-c.a;/opt/openssl/lib/libssl.a;/opt/openssl/lib/libcrypto.a;/usr/lib/x86_64-linux-gnu/libz.a;-lpthread\" \
+                   -DCMAKE_PREFIX_PATH=\"/opt/json-c;/opt/libuv\" \
                    -DOPENSSL_ROOT_DIR=/opt/openssl \
                    -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
                    -DZLIB_INCLUDE_DIR=/usr/include \
-                   -DCMAKE_PREFIX_PATH=\"/opt/json-c;/opt/libuv\" \
                    -DCMAKE_EXE_LINKER_FLAGS='-static' \
                    -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
                    -DCMAKE_SKIP_RPATH=ON &&
