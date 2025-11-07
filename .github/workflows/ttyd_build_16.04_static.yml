@@ -82,12 +82,18 @@ jobs:
         git clone https://github.com/tsl0922/ttyd.git &&
         sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
         echo 'set(LWS_LINK_STATIC ON)' >> ttyd/CMakeLists.txt &&
+        echo 'set(OPENSSL_USE_STATIC_LIBS TRUE)' >> ttyd/CMakeLists.txt &&
+        echo 'set(OPENSSL_ROOT_DIR /opt/openssl)' >> ttyd/CMakeLists.txt &&
+        echo 'set(OPENSSL_INCLUDE_DIR /opt/openssl/include)' >> ttyd/CMakeLists.txt &&
+        echo 'set(OPENSSL_CRYPTO_LIBRARY /opt/openssl/lib/libcrypto.a)' >> ttyd/CMakeLists.txt &&
+        echo 'set(OPENSSL_SSL_LIBRARY /opt/openssl/lib/libssl.a)' >> ttyd/CMakeLists.txt &&
         cat /build/patch.cmake >> ttyd/CMakeLists.txt &&
         grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
         cd ttyd &&
         mkdir build && cd build &&
         export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
         cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
+                 -DOPENSSL_USE_STATIC_LIBS=ON \
                  -DOPENSSL_ROOT_DIR=/opt/openssl \
                  -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
                  -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
