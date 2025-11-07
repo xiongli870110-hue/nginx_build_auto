@@ -53,6 +53,7 @@ jobs:
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/json-c -DBUILD_SHARED_LIBS=OFF &&
           make -j\$(nproc) &&
           make install &&
+          ln -s /opt/json-c/include/json-c /opt/json-c/include/json &&
           cd /build &&
 
           # 构建 libuv 静态库
