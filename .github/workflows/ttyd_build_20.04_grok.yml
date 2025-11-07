@@ -22,10 +22,10 @@ jobs:
             apt update
             DEBIAN_FRONTEND=noninteractive apt install -y \
               build-essential cmake git wget tar \
-              libssl-dev libpam0g-dev autoconf libtool pkg-config
+              autoconf libtool pkg-config perl
 
             # ---------- 清理旧目录 ----------
-            rm -rf json-c-* libev-* libwebsockets-* ttyd zlib-* libuv* *.tar.gz
+            rm -rf json-c-* libev-* libwebsockets-* ttyd zlib-* libuv* openssl-* *.tar.gz
 
             # ---------- 1. 静态编译 zlib ----------
             wget -q https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.gz
@@ -35,7 +35,15 @@ jobs:
             make -j\$(nproc) && make install
             cd ..
 
-            # ---------- 2. 静态编译 libjson-c ----------
+            # ---------- 2. 静态编译 OpenSSL ----------
+            wget -q https://www.openssl.org/source/openssl-1.1.1w.tar.gz
+            tar -xzf openssl-1.1.1w.tar.gz
+            cd openssl-1.1.1w
+            ./Configure linux-x86_64 no-shared --prefix=/usr/local
+            make -j\$(nproc) && make install
+            cd ..
+
+            # ---------- 3. 静态编译 libjson-c ----------
             wget -q https://github.com/json-c/json-c/archive/json-c-0.15-20200726.tar.gz
             tar -xzf json-c-0.15-20200726.tar.gz
             cd json-c-json-c-0.15-20200726
@@ -44,7 +52,7 @@ jobs:
             make -j\$(nproc) && make install
             cd ../..
 
-            # ---------- 3. 静态编译 libev ----------
+            # ---------- 4. 静态编译 libev ----------
             wget -q http://dist.schmorp.de/libev/Attic/libev-4.33.tar.gz
             tar -xzf libev-4.33.tar.gz
             cd libev-4.33
@@ -52,7 +60,7 @@ jobs:
             make -j\$(nproc) && make install
             cd ..
 
-            # ---------- 4. 静态编译 libuv ----------
+            # ---------- 5. 静态编译 libuv ----------
             git clone https://github.com/libuv/libuv.git
             cd libuv
             sh autogen.sh
@@ -60,7 +68,7 @@ jobs:
             make -j\$(nproc) && make install
             cd ..
 
-            # ---------- 5. 静态编译 libwebsockets ----------
+            # ---------- 6. 静态编译 libwebsockets ----------
             wget -q https://github.com/warmcat/libwebsockets/archive/v4.3.2.tar.gz -O lws.tar.gz
             tar -xzf lws.tar.gz
             cd libwebsockets-4.3.2
@@ -74,7 +82,7 @@ jobs:
             make -j\$(nproc) && make install
             cd ../..
 
-            # ---------- 6. 编译 ttyd（真正静态链接） ----------
+            # ---------- 7. 编译 ttyd（真正静态链接） ----------
             git clone https://github.com/tsl0922/ttyd.git
             cd ttyd
             mkdir build && cd build
@@ -91,6 +99,9 @@ jobs:
               -DLIBUV_INCLUDE_DIR=/usr/local/include \
               -DZLIB_LIBRARY=/usr/local/lib/libz.a \
               -DZLIB_INCLUDE_DIR=/usr/local/include \
+              -DOPENSSL_ROOT_DIR=/usr/local \
+              -DOPENSSL_LIBRARIES='/usr/local/lib/libssl.a;/usr/local/lib/libcrypto.a' \
+              -DOPENSSL_INCLUDE_DIR=/usr/local/include \
               -DBUILD_SHARED_LIBS=OFF \
               -DCMAKE_EXE_LINKER_FLAGS='-static' \
               -DCMAKE_FIND_LIBRARY_SUFFIXES=.a \
@@ -98,7 +109,7 @@ jobs:
             make -j\$(nproc)
             make install
 
-            # ---------- 7. 打包 ----------
+            # ---------- 8. 打包 ----------
             mkdir -p /build/output
             cp /opt/ttyd/bin/ttyd /build/output/ttyd
           "
@@ -121,7 +132,7 @@ jobs:
           name: "ttyd 1.7.4 Grok Static Build"
           body: |
             ✅ Built inside Ubuntu 20.04 container (glibc 2.31)  
-            ✅ Fully statically linked: zlib, libjson-c, libev, libwebsockets, libuv  
+            ✅ Fully statically linked: OpenSSL, zlib, libjson-c, libev, libwebsockets, libuv  
             ✅ Compatible with QNAP NAS, Debian 10+, Ubuntu 20.04/22.04/24.04, Alpine, BusyBox  
             ✅ No runtime dependencies — verified with ldd  
             ⚠️ Not compatible with glibc < 2.25
