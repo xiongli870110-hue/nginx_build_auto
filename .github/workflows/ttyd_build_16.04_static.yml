@@ -116,12 +116,19 @@ jobs:
           make -j\$(nproc) &&
           make install &&
 
-          mkdir -p /build/output &&
-          cp /opt/ttyd/bin/ttyd /build/output/ttyd
+          # 验证并复制 ttyd 可执行文件
+          mkdir -p /build/output
+          if [ -f /opt/ttyd/bin/ttyd ]; then
+            cp /opt/ttyd/bin/ttyd /build/output/ttyd
+          else
+            echo '❌ ttyd 可执行文件未找到，跳过打包'
+            exit 1
+          fi
         "
 
     - name: Package build output
       run: |
+        ls -l output || (echo '❌ output 目录不存在或为空' && exit 1)
         tar -czvf ttyd-build.tar.gz output
 
     - name: Create GitHub Release
