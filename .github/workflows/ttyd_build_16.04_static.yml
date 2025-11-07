@@ -16,76 +16,76 @@ jobs:
     - name: Build static ttyd inside Ubuntu 16.04 container
       run: |
         docker run --rm -v $PWD:/build -w /build ubuntu:16.04 bash -c "
-          set -e
-          apt update &&
-          DEBIAN_FRONTEND=noninteractive apt install -y \
-            build-essential \
-            git \
-            curl ca-certificates \
-            zlib1g-dev \
-            pkg-config \
-            autoconf \
-            automake \
-            libtool &&
+        set -e
+        apt update &&
+        DEBIAN_FRONTEND=noninteractive apt install -y \
+          build-essential \
+          git \
+          curl ca-certificates \
+          zlib1g-dev \
+          pkg-config \
+          autoconf \
+          automake \
+          libtool &&
 
-          # 安装 CMake 3.27.9
-          curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
-          tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
-          mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
-          ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
-          export PATH=/opt/cmake/bin:\$PATH &&
-          cmake --version &&
+        # 安装 CMake 3.27.9
+        curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
+        tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
+        mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
+        ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
+        export PATH=/opt/cmake/bin:\$PATH &&
+        cmake --version &&
 
-          # 构建 OpenSSL 静态库
-          curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
-          tar -xzf openssl-1.1.1u.tar.gz &&
-          cd openssl-1.1.1u &&
-          ./config --prefix=/opt/openssl no-shared &&
-          make -j\$(nproc) &&
-          make install &&
-          cd /build &&
+        # 构建 OpenSSL 静态库
+        curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
+        tar -xzf openssl-1.1.1u.tar.gz &&
+        cd openssl-1.1.1u &&
+        ./config --prefix=/opt/openssl no-shared &&
+        make -j\$(nproc) &&
+        make install &&
+        cd /build &&
 
-          # 构建 json-c 静态库
-          curl -LO https://s3.amazonaws.com/json-c_releases/releases/json-c-0.17.tar.gz &&
-          tar -xzf json-c-0.17.tar.gz &&
-          cd json-c-0.17 &&
-          mkdir build && cd build &&
-          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/json-c -DBUILD_SHARED_LIBS=OFF &&
-          make -j\$(nproc) &&
-          make install &&
-          cd /build &&
+        # 构建 json-c 静态库
+        curl -LO https://s3.amazonaws.com/json-c_releases/releases/json-c-0.17.tar.gz &&
+        tar -xzf json-c-0.17.tar.gz &&
+        cd json-c-0.17 &&
+        mkdir build && cd build &&
+        cmake .. -DCMAKE_INSTALL_PREFIX=/opt/json-c -DBUILD_SHARED_LIBS=OFF &&
+        make -j\$(nproc) &&
+        make install &&
+        cd /build &&
 
-          # 构建 libuv 静态库
-          git clone https://github.com/libuv/libuv.git -b v1.46.0 &&
-          cd libuv &&
-          sh autogen.sh &&
-          ./configure --prefix=/opt/libuv --disable-shared --enable-static &&
-          make -j\$(nproc) &&
-          make install &&
-          cd /build &&
+        # 构建 libuv 静态库
+        git clone https://github.com/libuv/libuv.git -b v1.46.0 &&
+        cd libuv &&
+        sh autogen.sh &&
+        ./configure --prefix=/opt/libuv --disable-shared --enable-static &&
+        make -j\$(nproc) &&
+        make install &&
+        cd /build &&
 
-          # 构建 libwebsockets 静态库
-          git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
-          cd libwebsockets &&
-          mkdir build && cd build &&
-          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
-                   -DLWS_WITH_STATIC=ON \
-                   -DLWS_WITH_SHARED=OFF \
-                   -DLWS_WITH_SSL=ON \
-                   -DLWS_WITH_LIBUV=ON \
-                   -DOPENSSL_ROOT_DIR=/opt/openssl \
-                   -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
-                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
-                   -DLIBUV_INCLUDE_DIRS=/opt/libuv/include \
-                   -DLIBUV_LIBRARIES=/opt/libuv/lib/libuv.a &&
-          make -j\$(nproc) &&
-          make install &&
-          cd /build &&
+        # 构建 libwebsockets 静态库
+        git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
+        cd libwebsockets &&
+        mkdir build && cd build &&
+        cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
+                 -DLWS_WITH_STATIC=ON \
+                 -DLWS_WITH_SHARED=OFF \
+                 -DLWS_WITH_SSL=ON \
+                 -DLWS_WITH_LIBUV=ON \
+                 -DOPENSSL_ROOT_DIR=/opt/openssl \
+                 -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
+                 -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
+                 -DLIBUV_INCLUDE_DIRS=/opt/libuv/include \
+                 -DLIBUV_LIBRARIES=/opt/libuv/lib/libuv.a &&
+        make -j\$(nproc) &&
+        make install &&
+        cd /build &&
 
-          # 克隆 ttyd 并安全替换链接行
-          git clone https://github.com/tsl0922/ttyd.git &&
-          sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
-          printf '%s\n' \
+        # 克隆 ttyd 并替换链接行
+        git clone https://github.com/tsl0922/ttyd.git &&
+        sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
+        printf '%s\n' \
 'target_link_libraries(ttyd' \
 '  PRIVATE /opt/libwebsockets/lib/libwebsockets.a' \
 '  PRIVATE /opt/libuv/lib/libuv.a' \
@@ -94,36 +94,36 @@ jobs:
 '  PRIVATE /opt/openssl/lib/libcrypto.a' \
 '  PRIVATE /usr/lib/x86_64-linux-gnu/libz.a' \
 '  PRIVATE pthread)' >> ttyd/CMakeLists.txt &&
-          grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
-          cd ttyd &&
-          mkdir build && cd build &&
-          export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
-          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
-                   -DOPENSSL_ROOT_DIR=/opt/openssl \
-                   -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
-                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
-                   -DOPENSSL_SSL_LIBRARY=/opt/openssl/lib/libssl.a \
-                   -DLIBUV_INCLUDE_DIR=/opt/libuv/include \
-                   -DLIBUV_LIBRARY=/opt/libuv/lib/libuv.a \
-                   -DJSON-C_INCLUDE_DIR=/opt/json-c/include \
-                   -DJSON-C_LIBRARY=/opt/json-c/lib/libjson-c.a \
-                   -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
-                   -DZLIB_INCLUDE_DIR=/usr/include \
-                   -DCMAKE_EXE_LINKER_FLAGS='-static' \
-                   -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
-                   -DCMAKE_SKIP_RPATH=ON &&
-          make -j\$(nproc) &&
-          make install &&
+        grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
+        cd ttyd &&
+        mkdir build && cd build &&
+        export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
+        cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
+                 -DOPENSSL_ROOT_DIR=/opt/openssl \
+                 -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
+                 -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
+                 -DOPENSSL_SSL_LIBRARY=/opt/openssl/lib/libssl.a \
+                 -DLIBUV_INCLUDE_DIR=/opt/libuv/include \
+                 -DLIBUV_LIBRARY=/opt/libuv/lib/libuv.a \
+                 -DJSON-C_INCLUDE_DIR=/opt/json-c/include \
+                 -DJSON-C_LIBRARY=/opt/json-c/lib/libjson-c.a \
+                 -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
+                 -DZLIB_INCLUDE_DIR=/usr/include \
+                 -DCMAKE_EXE_LINKER_FLAGS='-static' \
+                 -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
+                 -DCMAKE_SKIP_RPATH=ON &&
+        make -j\$(nproc) &&
+        make install &&
 
-          # 验证并复制 ttyd 可执行文件
-          mkdir -p /build/output
-          if [ -f /opt/ttyd/bin/ttyd ]; then
-            cp /opt/ttyd/bin/ttyd /build/output/ttyd
-          else
-            echo '❌ ttyd 可执行文件未找到，跳过打包'
-            ls -l /opt/ttyd/bin
-            exit 1
-          fi
+        # 验证并复制 ttyd 可执行文件
+        mkdir -p /build/output
+        if [ -f /opt/ttyd/bin/ttyd ]; then
+          cp /opt/ttyd/bin/ttyd /build/output/ttyd
+        else
+          echo '❌ ttyd 可执行文件未找到，跳过打包'
+          ls -l /opt/ttyd/bin
+          exit 1
+        fi
         "
 
     - name: Package build output
