@@ -47,10 +47,12 @@ jobs:
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
                    -DLWS_WITH_STATIC=ON \
-                   -DLWS_WITH_SHARED=OFF \  # 禁用共享库
+                   -DLWS_WITH_SHARED=OFF \
                    -DLWS_WITH_SSL=ON \
                    -DLWS_WITH_LIBUV=ON \
-                   -DOPENSSL_ROOT_DIR=/opt/openssl &&
+                   -DOPENSSL_ROOT_DIR=/opt/openssl \
+                   -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
+                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a &&
           make -j\$(nproc) &&
           make install &&
           cd /build &&
@@ -62,8 +64,8 @@ jobs:
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
                    -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
                    -DOPENSSL_ROOT_DIR=/opt/openssl \
-                   -DCMAKE_EXE_LINKER_FLAGS='-static' \  # 强制静态链接
-                   -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \   # 优先使用 .a 文件
+                   -DCMAKE_EXE_LINKER_FLAGS='-static' \
+                   -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
                    -DCMAKE_SKIP_RPATH=ON &&
           make -j\$(nproc) &&
           make install &&
@@ -85,7 +87,8 @@ jobs:
           ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
           ✅ Fully statically linked — no runtime dependency on libwebsockets, libuv, or OpenSSL  
           ✅ Compatible with QNAP NAS, Alpine, BusyBox, and other minimal systems  
-          ✅ libuv support enabled, mbedtls disabled
+          ✅ libuv support enabled, mbedtls disabled  
+          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
