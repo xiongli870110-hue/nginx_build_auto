@@ -78,9 +78,9 @@ jobs:
         make install &&
         cd /build &&
 
-        # 克隆 ttyd 并验证目录存在
-        git clone https://github.com/tsl0922/ttyd.git &&
-        [ -d ttyd ] || { echo '❌ ttyd clone failed'; exit 1; }
+        # 克隆 ttyd 到指定路径并验证
+        git clone https://github.com/tsl0922/ttyd.git ttyd &&
+        [ -f ttyd/CMakeLists.txt ] || { echo '❌ ttyd clone failed or incomplete'; exit 1; }
 
         # 屏蔽 OpenSSL 查找并追加链接配置
         sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
