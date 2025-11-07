@@ -30,10 +30,22 @@ jobs:
           mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
           ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
 
+          curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
+          tar -xzf openssl-1.1.1u.tar.gz &&
+          cd openssl-1.1.1u &&
+          ./config --prefix=/opt/openssl no-shared &&
+          make -j\$(nproc) &&
+          make install &&
+          cd /build &&
+
           git clone https://github.com/warmcat/libwebsockets.git -b v4.3.2 &&
           cd libwebsockets &&
           mkdir build && cd build &&
-          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets -DLWS_WITH_STATIC=ON -DLWS_WITH_SHARED=OFF &&
+          cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
+                   -DLWS_WITH_STATIC=ON \
+                   -DLWS_WITH_SHARED=OFF \
+                   -DLWS_WITH_SSL=ON \
+                   -DOPENSSL_ROOT_DIR=/opt/openssl &&
           make -j\$(nproc) &&
           make install &&
           cd /build &&
@@ -42,7 +54,8 @@ jobs:
           cd ttyd &&
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
-                   -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets &&
+                   -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
+                   -DOPENSSL_ROOT_DIR=/opt/openssl &&
           make -j\$(nproc) &&
           make install &&
 
@@ -62,8 +75,8 @@ jobs:
         body: |
           ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
           ✅ Compatible with QNAP NAS, Debian 8/9, Ubuntu 16.04+, and other legacy systems  
-          ✅ No runtime dependency on glibc ≥ 2.25  
-          ✅ Statically linked with libwebsockets and json-c
+          ✅ Statically linked with OpenSSL 1.1.1u and libwebsockets 4.3.2  
+          ✅ No runtime dependency on glibc ≥ 2.25
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
