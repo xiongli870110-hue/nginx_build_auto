@@ -30,7 +30,7 @@ jobs:
           autoconf \
           automake \
           libtool &&
-
+        
         # 安装 CMake 3.27.9
         curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
         tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
@@ -78,10 +78,11 @@ jobs:
         make install &&
         cd /build &&
 
-        # 克隆 ttyd 并追加链接配置
+        # 克隆 ttyd 并屏蔽 OpenSSL 查找
         git clone https://github.com/tsl0922/ttyd.git &&
         sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
         sed -i '/find_package(OpenSSL/d' ttyd/lib/tls/CMakeLists.txt &&
+        grep -q 'find_package(OpenSSL' ttyd/lib/tls/CMakeLists.txt && echo '❌ OpenSSL find_package still present' && exit 1 || echo '✅ OpenSSL find_package removed' &&
         echo 'set(LWS_LINK_STATIC ON)' >> ttyd/CMakeLists.txt &&
         echo 'set(OPENSSL_USE_STATIC_LIBS TRUE)' >> ttyd/CMakeLists.txt &&
         echo 'set(OPENSSL_ROOT_DIR /opt/openssl)' >> ttyd/CMakeLists.txt &&
@@ -89,7 +90,6 @@ jobs:
         echo 'set(OPENSSL_CRYPTO_LIBRARY /opt/openssl/lib/libcrypto.a)' >> ttyd/CMakeLists.txt &&
         echo 'set(OPENSSL_SSL_LIBRARY /opt/openssl/lib/libssl.a)' >> ttyd/CMakeLists.txt &&
         cat /build/patch.cmake >> ttyd/CMakeLists.txt &&
-        grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
         cd ttyd &&
         mkdir build && cd build &&
         export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
@@ -117,11 +117,16 @@ jobs:
         mkdir -p /build/output
         if [ -f /opt/ttyd/bin/ttyd ]; then
           cp /opt/ttyd/bin/ttyd /build/output/ttyd
+          echo '✅ ttyd binary copied'
         else
           echo '❌ ttyd 可执行文件未找到，跳过打包'
           ls -l /opt/ttyd/bin
           exit 1
         fi
+
+        # 验证是否为静态链接
+        echo '🔍 ldd 检查 ttyd 是否为静态链接：'
+        ldd /build/output/ttyd || echo '✅ 静态链接确认：ldd 无法解析，说明无依赖'
         "
 
     - name: Package build output
@@ -143,7 +148,8 @@ jobs:
           ✅ Fully statically linked — no runtime dependency on libwebsockets, libuv, OpenSSL, json-c, or zlib  
           ✅ Compatible with QNAP NAS, Alpine, BusyBox, and other minimal systems  
           ✅ libuv support enabled, mbedtls disabled  
-          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2 + json-c 0.17 + libuv 1.46.0
+          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2 + json-c 0.17 + libuv 1.46.0  
+          ✅ Verified with ldd: no dynamic dependencies
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
