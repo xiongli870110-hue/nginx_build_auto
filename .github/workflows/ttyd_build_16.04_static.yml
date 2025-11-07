@@ -22,21 +22,28 @@ jobs:
             build-essential \
             git \
             curl ca-certificates \
-            libjson-c-dev \
             zlib1g-dev \
-            libuv1-dev &&
-          
-          # 安装 CMake
-          curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
-          tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
-          mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
-          ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
+            libuv1-dev \
+            cmake \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config &&
 
           # 构建 OpenSSL 静态库
           curl -LO https://www.openssl.org/source/openssl-1.1.1u.tar.gz &&
           tar -xzf openssl-1.1.1u.tar.gz &&
           cd openssl-1.1.1u &&
           ./config --prefix=/opt/openssl no-shared &&
+          make -j\$(nproc) &&
+          make install &&
+          cd /build &&
+
+          # 构建 json-c 静态库
+          git clone https://github.com/json-c/json-c.git &&
+          cd json-c &&
+          sh autogen.sh &&
+          ./configure --prefix=/opt/json-c --disable-shared --enable-static &&
           make -j\$(nproc) &&
           make install &&
           cd /build &&
@@ -64,6 +71,8 @@ jobs:
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
                    -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
                    -DOPENSSL_ROOT_DIR=/opt/openssl \
+                   -DJSONC_LIBRARY=/opt/json-c/lib/libjson-c.a \
+                   -DJSONC_INCLUDE_DIR=/opt/json-c/include/json-c \
                    -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
                    -DZLIB_INCLUDE_DIR=/usr/include \
                    -DCMAKE_EXE_LINKER_FLAGS='-static' \
@@ -87,10 +96,10 @@ jobs:
         name: "ttyd 1.7.7 Static Build"
         body: |
           ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
-          ✅ Fully statically linked — no runtime dependency on libwebsockets, libuv, OpenSSL, or zlib  
+          ✅ Fully statically linked — no runtime dependency on libwebsockets, libuv, OpenSSL, json-c, or zlib  
           ✅ Compatible with QNAP NAS, Alpine, BusyBox, and other minimal systems  
           ✅ libuv support enabled, mbedtls disabled  
-          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2
+          ✅ OpenSSL 1.1.1u + libwebsockets 4.3.2 + json-c (static)
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
