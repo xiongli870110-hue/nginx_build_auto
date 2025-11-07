@@ -93,6 +93,7 @@ jobs:
         mkdir build && cd build &&
         export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
         cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
+                 -DCMAKE_PREFIX_PATH=\"/opt/openssl;/opt/json-c;/opt/libuv;/opt/libwebsockets\" \
                  -DOPENSSL_USE_STATIC_LIBS=ON \
                  -DOPENSSL_ROOT_DIR=/opt/openssl \
                  -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
