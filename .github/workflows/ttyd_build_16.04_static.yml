@@ -73,14 +73,7 @@ jobs:
         mkdir build && cd build &&
         cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libwebsockets \
                  -DLWS_WITH_STATIC=ON \
-                 -DLWS_WITH_SHARED=OFF \
-                 -DLWS_WITH_SSL=ON \
-                 -DLWS_WITH_LIBUV=ON \
-                 -DOPENSSL_ROOT_DIR=/opt/openssl \
-                 -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
-                 -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
-                 -DLIBUV_INCLUDE_DIRS=/opt/libuv/include \
-                 -DLIBUV_LIBRARIES=/opt/libuv/lib/libuv.a &&
+                 -DLWS_WITH_SHARED=OFF &&
         make -j\$(nproc) &&
         make install &&
         cd /build &&
@@ -88,6 +81,7 @@ jobs:
         # 克隆 ttyd 并追加链接配置
         git clone https://github.com/tsl0922/ttyd.git &&
         sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
+        echo 'set(LWS_LINK_STATIC ON)' >> ttyd/CMakeLists.txt &&
         cat /build/patch.cmake >> ttyd/CMakeLists.txt &&
         grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
         cd ttyd &&
@@ -104,6 +98,7 @@ jobs:
                  -DJSON-C_LIBRARY=/opt/json-c/lib/libjson-c.a \
                  -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
                  -DZLIB_INCLUDE_DIR=/usr/include \
+                 -DLWS_LINK_STATIC=ON \
                  -DCMAKE_EXE_LINKER_FLAGS='-static' \
                  -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
                  -DCMAKE_SKIP_RPATH=ON &&
