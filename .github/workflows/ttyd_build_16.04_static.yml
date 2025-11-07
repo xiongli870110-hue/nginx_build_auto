@@ -15,7 +15,10 @@ jobs:
 
     - name: Build static ttyd inside Ubuntu 16.04 container
       run: |
-        docker run --rm -v $PWD:/build -w /build ubuntu:16.04 bash -c "
+        docker run --rm \
+          -v $PWD:/build \
+          -v $PWD/patch.cmake:/build/patch.cmake \
+          -w /build ubuntu:16.04 bash -c "
         set -e
         apt update &&
         DEBIAN_FRONTEND=noninteractive apt install -y \
@@ -85,8 +88,7 @@ jobs:
         # 克隆 ttyd 并追加链接配置
         git clone https://github.com/tsl0922/ttyd.git &&
         sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt &&
-        cp patch.cmake ttyd/link_patch.cmake &&
-        cat ttyd/link_patch.cmake >> ttyd/CMakeLists.txt &&
+        cat /build/patch.cmake >> ttyd/CMakeLists.txt &&
         grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
         cd ttyd &&
         mkdir build && cd build &&
