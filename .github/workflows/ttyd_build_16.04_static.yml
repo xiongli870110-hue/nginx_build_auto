@@ -45,7 +45,7 @@ jobs:
           make install &&
           cd /build &&
 
-          # 构建 json-c 静态库并软链接整个 json-c 目录为 json
+          # 构建 json-c 静态库
           curl -LO https://s3.amazonaws.com/json-c_releases/releases/json-c-0.17.tar.gz &&
           tar -xzf json-c-0.17.tar.gz &&
           cd json-c-0.17 &&
@@ -53,7 +53,6 @@ jobs:
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/json-c -DBUILD_SHARED_LIBS=OFF &&
           make -j\$(nproc) &&
           make install &&
-          ln -s /opt/json-c/include/json-c /opt/json-c/include/json &&
           cd /build &&
 
           # 构建 libuv 静态库
@@ -88,7 +87,7 @@ jobs:
           sed -i 's|target_link_libraries(ttyd PRIVATE .*websockets_shared.*)|target_link_libraries(ttyd PRIVATE /opt/libwebsockets/lib/libwebsockets.a /opt/libuv/lib/libuv.a /opt/json-c/lib/libjson-c.a /opt/openssl/lib/libssl.a /opt/openssl/lib/libcrypto.a /usr/lib/x86_64-linux-gnu/libz.a pthread)|' ttyd/CMakeLists.txt &&
           cd ttyd &&
           mkdir build && cd build &&
-          export C_INCLUDE_PATH=/opt/json-c/include:/opt/libuv/include:/opt/openssl/include &&
+          export CFLAGS=\"-I/opt/json-c/include/json-c\" &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
                    -DOPENSSL_ROOT_DIR=/opt/openssl \
                    -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
