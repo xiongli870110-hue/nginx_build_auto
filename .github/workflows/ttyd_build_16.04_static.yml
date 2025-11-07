@@ -88,6 +88,16 @@ jobs:
           cd ttyd &&
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
+                   -DOPENSSL_ROOT_DIR=/opt/openssl \
+                   -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
+                   -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
+                   -DOPENSSL_SSL_LIBRARY=/opt/openssl/lib/libssl.a \
+                   -DLIBUV_INCLUDE_DIR=/opt/libuv/include \
+                   -DLIBUV_LIBRARY=/opt/libuv/lib/libuv.a \
+                   -DJSON-C_INCLUDE_DIR=/opt/json-c/include \
+                   -DJSON-C_LIBRARY=/opt/json-c/lib/libjson-c.a \
+                   -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.a \
+                   -DZLIB_INCLUDE_DIR=/usr/include \
                    -DCMAKE_EXE_LINKER_FLAGS='-static' \
                    -DCMAKE_FIND_LIBRARY_SUFFIXES='.a' \
                    -DCMAKE_SKIP_RPATH=ON &&
