@@ -87,13 +87,13 @@ jobs:
           sed -i '/target_link_libraries(ttyd PRIVATE /d' ttyd/CMakeLists.txt
           cat <<EOF >> ttyd/CMakeLists.txt
           target_link_libraries(ttyd
-          PRIVATE /opt/libwebsockets/lib/libwebsockets.a
-          PRIVATE /opt/libuv/lib/libuv.a
-          PRIVATE /opt/json-c/lib/libjson-c.a
-          PRIVATE /opt/openssl/lib/libssl.a
-          PRIVATE /opt/openssl/lib/libcrypto.a
-          PRIVATE /usr/lib/x86_64-linux-gnu/libz.a
-          PRIVATE pthread)
+            PRIVATE /opt/libwebsockets/lib/libwebsockets.a
+            PRIVATE /opt/libuv/lib/libuv.a
+            PRIVATE /opt/json-c/lib/libjson-c.a
+            PRIVATE /opt/openssl/lib/libssl.a
+            PRIVATE /opt/openssl/lib/libcrypto.a
+            PRIVATE /usr/lib/x86_64-linux-gnu/libz.a
+            PRIVATE pthread)
           EOF
           grep libwebsockets.a ttyd/CMakeLists.txt || echo '❌ Patch failed' &&
           cd ttyd &&
@@ -122,14 +122,19 @@ jobs:
             cp /opt/ttyd/bin/ttyd /build/output/ttyd
           else
             echo '❌ ttyd 可执行文件未找到，跳过打包'
+            ls -l /opt/ttyd/bin
             exit 1
           fi
         "
 
     - name: Package build output
       run: |
-        ls -l output || (echo '❌ output 目录不存在或为空' && exit 1)
-        tar -czvf ttyd-build.tar.gz output
+        if [ -d output ] && [ -f output/ttyd ]; then
+          tar -czvf ttyd-build.tar.gz output
+        else
+          echo '❌ output 目录不存在或 ttyd 文件缺失'
+          exit 1
+        fi
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
