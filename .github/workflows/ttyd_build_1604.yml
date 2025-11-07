@@ -23,8 +23,9 @@ jobs:
             git \
             curl ca-certificates \
             libjson-c-dev \
-            zlib1g-dev &&
-          
+            zlib1g-dev \
+            libuv1-dev &&
+
           curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
           tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
           mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
@@ -45,6 +46,7 @@ jobs:
                    -DLWS_WITH_STATIC=ON \
                    -DLWS_WITH_SHARED=OFF \
                    -DLWS_WITH_SSL=ON \
+                   -DLWS_WITH_LIBUV=ON \
                    -DOPENSSL_ROOT_DIR=/opt/openssl &&
           make -j\$(nproc) &&
           make install &&
@@ -55,7 +57,9 @@ jobs:
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd \
                    -DLibwebsockets_DIR=/opt/libwebsockets/lib/cmake/libwebsockets \
-                   -DOPENSSL_ROOT_DIR=/opt/openssl &&
+                   -DOPENSSL_ROOT_DIR=/opt/openssl \
+                   -DUSE_LIBUV=OFF \
+                   -DUSE_MBEDTLS=OFF &&
           make -j\$(nproc) &&
           make install &&
 
@@ -70,13 +74,14 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ttyd-1.7.4-qnap
-        name: "ttyd 1.7.4 Build (Ubuntu 16.04)"
+        tag_name: ttyd-1.7.7-qnap
+        name: "ttyd 1.7.7 Build (Ubuntu 16.04)"
         body: |
           ✅ Built inside Ubuntu 16.04 container (glibc 2.23)  
           ✅ Compatible with QNAP NAS, Debian 8/9, Ubuntu 16.04+, and other legacy systems  
           ✅ Statically linked with OpenSSL 1.1.1u and libwebsockets 4.3.2  
-          ✅ No runtime dependency on glibc ≥ 2.25
+          ✅ No runtime dependency on glibc ≥ 2.25  
+          ✅ libuv support disabled for compatibility
         files: ttyd-build.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GH_PAT }}
