@@ -20,17 +20,21 @@ jobs:
           apt update &&
           DEBIAN_FRONTEND=noninteractive apt install -y \
             build-essential \
-            cmake \
             git \
             libjson-c-dev \
             libwebsockets-dev \
             curl ca-certificates &&
           
+          curl -LO https://github.com/Kitware/CMake/releases/download/v3.27.9/cmake-3.27.9-linux-x86_64.tar.gz &&
+          tar -xzf cmake-3.27.9-linux-x86_64.tar.gz &&
+          mv cmake-3.27.9-linux-x86_64 /opt/cmake &&
+          ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake &&
+          
           git clone https://github.com/tsl0922/ttyd.git &&
           cd ttyd &&
           mkdir build && cd build &&
           cmake .. -DCMAKE_INSTALL_PREFIX=/opt/ttyd &&
-          make -j\$(nproc) &&
+          make -j$(nproc) &&
           make install &&
           
           mkdir -p /build/output &&
