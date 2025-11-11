@@ -1,13 +1,22 @@
+
 # 🚀 Nginx Build Auto
 
 自动从官方源码构建 Nginx，并上传到 GitHub Releases。构建版本包含常用模块，适用于嵌入式设备、自定义部署或轻量级环境（如 QNAP NAS）。
-做这个项目的目的是为了在自用的威联通NAS上搭建个人博客，由于威联通NAS的重启后重置/etc/目录，无法通过常规方法安装nginx,故采用此方法，已通过一些办法释放了威联通系统占用的80、443端口，安装此nginx后通过域名成功访问部署在NAS上的个人博客，very nice! 经过测试，在其它Ubuntu系统上也是完美安装。如果你用的Linux系统比较老旧，建议采用
-install_nginx_from_github_qanp.sh进行安装。
----
 
-# ⭐️ 安装 Nginx 如此简单
+## 📖 项目背景
 
-## 🧭 步骤一：进入主机并执行以下命令
+本项目旨在解决威联通NAS重启后重置`/etc/`目录导致无法常规安装Nginx的问题。通过此方法，可以在威联通NAS上成功部署个人博客。
+
+**已验证环境：**
+- ✅ QNAP NAS（已释放80、443端口）
+- ✅ Ubuntu 系统
+- ✅ 其他 Linux 发行版
+
+> 💡 **提示**：如果您的Linux系统比较老旧，建议使用 `install_nginx_from_github_qanp.sh` 进行安装。
+
+## ⭐️ 快速安装
+
+### 🧭 步骤一：执行安装命令
 
 ```bash
 sudo -i
@@ -15,9 +24,11 @@ cd /tmp
 nano install_nginx_from_github_qanp.sh
 chmod +x ./install_nginx_from_github_qanp.sh
 ./install_nginx_from_github_qanp.sh
+```
 
-⚙️ 安装过程输出示例
+### ⚙️ 安装过程输出示例
 
+```
 [nginx-install] 主程序位置识别为：/tmp/nginx-build/output/nginx/sbin
 [nginx-install] 安装到 /opt/nginx...
 [nginx-install] 创建软链接...
@@ -31,35 +42,41 @@ nginx: the configuration file /opt/nginx/conf/nginx.conf syntax is ok
 nginx: configuration file /opt/nginx/conf/nginx.conf test is successful
 [nginx-install] 启动 nginx...
 [nginx-install] 安装完成 ✅
+```
 
-🧪 步骤二：验证安装是否成功
+### 🧪 步骤二：验证安装
 
-root@instance-20250825-032000:/tmp# which nginx
-/usr/local/bin/nginx
+```bash
+# 检查nginx位置
+which nginx
 
-root@instance-20250825-032000:/tmp# nginx -t
-nginx: the configuration file /opt/nginx/conf/nginx.conf syntax is ok
-nginx: configuration file /opt/nginx/conf/nginx.conf test is successful
+# 测试配置文件
+nginx -t
 
-🌐 步骤三：打开浏览器访问你的 IP 地址
+# 输出示例：
+# /usr/local/bin/nginx
+# nginx: the configuration file /opt/nginx/conf/nginx.conf syntax is ok
+# nginx: configuration file /opt/nginx/conf/nginx.conf test is successful
+```
 
-Welcome to nginx @ instance-20250825-032000
+### 🌐 步骤三：访问测试
 
+打开浏览器访问您的服务器IP地址，将显示：
+```
+Welcome to nginx @ [您的服务器主机名]
+```
 
 ## 📦 构建产物
 
-最新构建版本：
-
+**最新构建版本：**
 🔗 [nginx-build.tar.gz](https://github.com/xiongli870110-hue/nginx_build_auto/releases/download/nginx-1.25.3/nginx-build.tar.gz)
 
-包含内容：
-
-output/ 
-   └── nginx/ 
+**包含内容：**
+```
+output/
+   └── nginx/
       └── nginx # 编译后的可执行文件
-
-
----
+```
 
 ## 🛠️ 构建参数
 
@@ -70,13 +87,9 @@ output/
 - ✅ Gzip 静态压缩 (`--with-http_gzip_static_module`)
 - ✅ PCRE 正则支持 (`--with-pcre`)
 
-构建脚本位于 `.github/workflows/build-and-release.yml`
-
----
+**构建脚本位置：** `.github/workflows/build-and-release.yml`
 
 ## 📥 一键安装脚本
-
-你可以使用以下脚本自动下载并安装 Nginx 到 `/opt/nginx`：
 
 ```bash
 #!/bin/bash
@@ -139,7 +152,7 @@ echo "[nginx-install] 创建日志文件..."
 touch "$LOG_DIR/access.log"
 touch "$LOG_DIR/error.log"
 
-# 自动选择系统存在的用户（优先 httpdusr > admin > raker）
+# 自动选择系统存在的用户
 for U in guest admin ubuntu; do
   if id "$U" >/dev/null 2>&1; then
     NGINX_USER="$U"
@@ -201,16 +214,29 @@ echo "[nginx-install] 启动 nginx..."
 "$INSTALL_DIR/nginx"
 
 echo "[nginx-install] 安装完成 ✅"
+```
 
+## 🚀 启动命令
 
-启动命令：
-
+```bash
 nginx -c /opt/nginx/conf/nginx.conf
+```
 
-🧩 自定义构建
-如需修改版本或模块，请编辑：
+## 🧩 自定义构建
 
+如需修改版本或模块，请编辑构建脚本中的以下参数：
+
+```yaml
 NGINX_VERSION="1.25.3"
 ./configure ...
+```
 
-位于 .github/workflows/build-and-release.yml
+**构建脚本位置：** `.github/workflows/build-and-release.yml`
+
+---
+
+**项目特点：**
+- 🎯 专为特殊环境（如QNAP NAS）优化
+- 📦 包含常用模块，开箱即用
+- 🔧 支持自定义构建参数
+- ✅ 多平台兼容测试
