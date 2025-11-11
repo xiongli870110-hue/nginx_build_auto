@@ -2,63 +2,73 @@
 
 set -e
 
-echo "[nginx-install] 开始安装 Nginx（使用预编译包）..."
+echo "[nginx-install] Start installing Nginx (using precompiled package)..."
 
 INSTALL_DIR=/opt/nginx
+
+# Check if Nginx is already installed
+if [ -x "$INSTALL_DIR/nginx" ]; then
+  echo "[nginx-install] Nginx is already installed at $INSTALL_DIR, skipping installation ✅"
+  exit 0
+fi
+
 CONF_DIR=$INSTALL_DIR/conf
 LOG_DIR=$INSTALL_DIR/logs
 SSL_DIR=$INSTALL_DIR/ssl
 HTML_DIR=$INSTALL_DIR/html
 RELEASE_URL=https://gitee.com/rakerose/gist/raw/master/nginx-build.tar.gz
-RELEASE_TMP=/tmp/nginx-build.tar.gz
-UNPACK_DIR=/tmp/nginx-build
 
-# 下载预编译包（如缺失）
+# Get the directory where this script is located
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+RELEASE_TMP=$SCRIPT_DIR/nginx-build.tar.gz
+UNPACK_DIR=$SCRIPT_DIR/nginx-build
+
+# Download precompiled package if missing
 if [ -f "$RELEASE_TMP" ]; then
-  echo "[nginx-install] 本地已存在 nginx-build.tar.gz，跳过下载 ✅"
+  echo "[nginx-install] Local nginx-build.tar.gz exists, skip download ✅"
 else
-  echo "[nginx-install] 下载预编译包..."
+  echo "[nginx-install] Downloading precompiled package..."
   wget -O "$RELEASE_TMP" "$RELEASE_URL"
 fi
 
-echo "[nginx-install] 解压预编译包..."
+echo "[nginx-install] Extracting precompiled package..."
 rm -rf "$UNPACK_DIR"
 mkdir -p "$UNPACK_DIR"
 tar -zxvf "$RELEASE_TMP" -C "$UNPACK_DIR"
 
-# 自动查找 nginx 主程序
+# Automatically locate nginx main binary
 FOUND_NGINX=$(find "$UNPACK_DIR" -type f -name nginx -executable | head -n 1)
 
 if [ -z "$FOUND_NGINX" ]; then
-  echo "[错误] 未找到 nginx 主程序，安装失败 ❌"
+  echo "[Error] nginx binary not found, installation failed ❌"
   exit 1
 fi
 
 FOUND_DIR=$(dirname "$FOUND_NGINX")
-echo "[nginx-install] 主程序位置识别为：$FOUND_DIR"
+echo "[nginx-install] Main binary located at: $FOUND_DIR"
 
-echo "[nginx-install] 安装到 $INSTALL_DIR..."
+echo "[nginx-install] Installing to $INSTALL_DIR..."
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 cp -r "$FOUND_DIR"/* "$INSTALL_DIR/"
 
-# 验证主程序是否存在
+# Verify nginx binary exists after installation
 if [ ! -f "$INSTALL_DIR/nginx" ]; then
-  echo "[错误] 安装后仍未找到 nginx 主程序，安装失败 ❌"
+  echo "[Error] nginx binary missing after installation, failed ❌"
   exit 1
 fi
 
-echo "[nginx-install] 创建软链接..."
+echo "[nginx-install] Creating symlink..."
 ln -sf "$INSTALL_DIR/nginx" /usr/local/bin/nginx
 
-echo "[nginx-install] 创建必要目录..."
+echo "[nginx-install] Creating required directories..."
 mkdir -p "$CONF_DIR" "$LOG_DIR" "$SSL_DIR" "$HTML_DIR"
 
-echo "[nginx-install] 创建日志文件..."
+echo "[nginx-install] Creating log files..."
 touch "$LOG_DIR/access.log"
 touch "$LOG_DIR/error.log"
 
-# 自动选择系统存在的用户（优先 httpdusr > admin > raker）
+# Automatically select existing system user (priority: guest > admin > ubuntu)
 for U in guest admin ubuntu; do
   if id "$U" >/dev/null 2>&1; then
     NGINX_USER="$U"
@@ -67,7 +77,7 @@ for U in guest admin ubuntu; do
 done
 NGINX_USER=${NGINX_USER:-admin}
 
-echo "[nginx-install] 创建默认配置文件 nginx.conf..."
+echo "[nginx-install] Creating default nginx.conf..."
 cat > "$CONF_DIR/nginx.conf" <<EOF
 user $NGINX_USER;
 
@@ -99,7 +109,7 @@ http {
 }
 EOF
 
-echo "[nginx-install] 创建 mime.types（最小版本）..."
+echo "[nginx-install] Creating mime.types (minimal version)..."
 cat > "$CONF_DIR/mime.types" <<EOF
 types {
     text/html html htm;
@@ -110,13 +120,13 @@ types {
 }
 EOF
 
-echo "[nginx-install] 创建默认首页..."
+echo "[nginx-install] Creating default homepage..."
 echo "<h1>Welcome to nginx @ $(hostname)</h1>" > "$HTML_DIR/index.html"
 
-echo "[nginx-install] 验证配置..."
+echo "[nginx-install] Validating configuration..."
 "$INSTALL_DIR/nginx" -t
 
-echo "[nginx-install] 启动 nginx..."
+echo "[nginx-install] Starting nginx..."
 "$INSTALL_DIR/nginx"
 
-echo "[nginx-install] 安装完成 ✅"
+echo "[nginx-install] Installation completed ✅"
