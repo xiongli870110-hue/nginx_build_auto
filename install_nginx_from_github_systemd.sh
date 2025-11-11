@@ -2,26 +2,34 @@
 
 set -e
 
-echo "[nginx-install] Start installing Nginx (using precompiled package)..."
-
 INSTALL_DIR=/opt/nginx
-
-# Check if Nginx is already installed
-if [ -x "$INSTALL_DIR/nginx" ]; then
-  echo "[nginx-install] Nginx is already installed at $INSTALL_DIR, skipping installation ✅"
-  exit 0
-fi
-
 CONF_DIR=$INSTALL_DIR/conf
 LOG_DIR=$INSTALL_DIR/logs
 SSL_DIR=$INSTALL_DIR/ssl
 HTML_DIR=$INSTALL_DIR/html
 RELEASE_URL=https://gitee.com/rakerose/gist/raw/master/nginx-build.tar.gz
 
-# Get the directory where this script is located
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 RELEASE_TMP=$SCRIPT_DIR/nginx-build.tar.gz
 UNPACK_DIR=$SCRIPT_DIR/nginx-build
+SERVICE_FILE=/etc/systemd/system/nginx.service
+SYMLINK=/usr/local/bin/nginx
+
+# -------------------------------
+# Always uninstall before install
+# -------------------------------
+echo "[nginx-install] Cleaning up old installation if exists..."
+systemctl stop nginx 2>/dev/null || true
+systemctl disable nginx 2>/dev/null || true
+rm -f "$SERVICE_FILE"
+systemctl daemon-reload
+rm -rf "$INSTALL_DIR"
+rm -f "$SYMLINK"
+
+# -------------------------------
+# Start installation
+# -------------------------------
+echo "[nginx-install] Start installing Nginx (using precompiled package)..."
 
 # Download precompiled package if missing
 if [ -f "$RELEASE_TMP" ]; then
@@ -50,16 +58,16 @@ echo "[nginx-install] Main binary located at: $FOUND_DIR"
 echo "[nginx-install] Installing to $INSTALL_DIR..."
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
-cp -r "$FOUND_DIR"/* "$INSTALL_DIR/"
+cp -r "$FOUND_DIR/.."/* "$INSTALL_DIR/"
 
 # Verify nginx binary exists after installation
-if [ ! -f "$INSTALL_DIR/nginx" ]; then
+if [ ! -f "$INSTALL_DIR/sbin/nginx" ]; then
   echo "[Error] nginx binary missing after installation, failed ❌"
   exit 1
 fi
 
 echo "[nginx-install] Creating symlink..."
-ln -sf "$INSTALL_DIR/nginx" /usr/local/bin/nginx
+ln -sf "$INSTALL_DIR/sbin/nginx" "$SYMLINK"
 
 echo "[nginx-install] Creating required directories..."
 mkdir -p "$CONF_DIR" "$LOG_DIR" "$SSL_DIR" "$HTML_DIR"
@@ -124,16 +132,11 @@ echo "[nginx-install] Creating default homepage..."
 echo "<h1>Welcome to nginx @ $(hostname)</h1>" > "$HTML_DIR/index.html"
 
 echo "[nginx-install] Validating configuration..."
-"$INSTALL_DIR/nginx" -t
-
-echo "[nginx-install] Starting nginx..."
-"$INSTALL_DIR/nginx"
+"$SYMLINK" -t -c "$CONF_DIR/nginx.conf" -p "$INSTALL_DIR"
 
 # -------------------------------
 # Add systemd auto-start logic
 # -------------------------------
-SERVICE_FILE=/etc/systemd/system/nginx.service
-
 echo "[nginx-install] Creating systemd service for auto-start..."
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
@@ -141,11 +144,10 @@ Description=Nginx Web Server
 After=network.target
 
 [Service]
-Type=forking
-ExecStart=$INSTALL_DIR/nginx
-ExecReload=$INSTALL_DIR/nginx -s reload
-ExecStop=$INSTALL_DIR/nginx -s quit
-PIDFile=$INSTALL_DIR/logs/nginx.pid
+Type=simple
+ExecStart=$SYMLINK -c $CONF_DIR/nginx.conf -p $INSTALL_DIR -g "daemon off;"
+ExecReload=$SYMLINK -s reload -p $INSTALL_DIR
+ExecStop=$SYMLINK -s quit -p $INSTALL_DIR
 Restart=always
 
 [Install]
