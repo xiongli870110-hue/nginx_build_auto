@@ -1,53 +1,60 @@
 #!/bin/bash
+
 set -e
 
-echo "[nginx-install] Starting Nginx installation (precompiled package)..."
-
-# Get the current script directory
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo "[nginx-install] Start installing Nginx (using precompiled package)..."
 
 INSTALL_DIR=/opt/nginx
+
+# Check if Nginx is already installed
+if [ -x "$INSTALL_DIR/nginx" ]; then
+  echo "[nginx-install] Nginx is already installed at $INSTALL_DIR, skipping installation ✅"
+  exit 0
+fi
+
 CONF_DIR=$INSTALL_DIR/conf
 LOG_DIR=$INSTALL_DIR/logs
 SSL_DIR=$INSTALL_DIR/ssl
 HTML_DIR=$INSTALL_DIR/html
-RELEASE_NAME=nginx-build.tar.gz
-RELEASE_URL=https://github.com/xiongli870110-hue/nginx_build_auto/releases/download/nginx-1.25.3-qnap/${RELEASE_NAME}
-RELEASE_LOCAL="${SCRIPT_DIR}/${RELEASE_NAME}"
-UNPACK_DIR=/tmp/nginx-build
+RELEASE_URL=https://gitee.com/rakerose/gist/raw/master/nginx-build.tar.gz
 
-# Check for local package in script directory
-if [ -f "$RELEASE_LOCAL" ]; then
-  echo "[nginx-install] Found nginx-build.tar.gz next to script ?"
+# Get the directory where this script is located
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+RELEASE_TMP=$SCRIPT_DIR/nginx-build.tar.gz
+UNPACK_DIR=$SCRIPT_DIR/nginx-build
+
+# Download precompiled package if missing
+if [ -f "$RELEASE_TMP" ]; then
+  echo "[nginx-install] Local nginx-build.tar.gz exists, skip download ✅"
 else
-  echo "[nginx-install] Downloading nginx-build.tar.gz to script directory..."
-  wget -O "$RELEASE_LOCAL" "$RELEASE_URL"
+  echo "[nginx-install] Downloading precompiled package..."
+  wget -O "$RELEASE_TMP" "$RELEASE_URL"
 fi
 
-echo "[nginx-install] Extracting package..."
+echo "[nginx-install] Extracting precompiled package..."
 rm -rf "$UNPACK_DIR"
 mkdir -p "$UNPACK_DIR"
-tar -zxvf "$RELEASE_LOCAL" -C "$UNPACK_DIR"
+tar -zxvf "$RELEASE_TMP" -C "$UNPACK_DIR"
 
-# Locate nginx binary
+# Automatically locate nginx main binary
 FOUND_NGINX=$(find "$UNPACK_DIR" -type f -name nginx -executable | head -n 1)
 
 if [ -z "$FOUND_NGINX" ]; then
-  echo "[error] Nginx binary not found, installation failed ?"
+  echo "[Error] nginx binary not found, installation failed ❌"
   exit 1
 fi
 
 FOUND_DIR=$(dirname "$FOUND_NGINX")
-echo "[nginx-install] Binary located at: $FOUND_DIR"
+echo "[nginx-install] Main binary located at: $FOUND_DIR"
 
 echo "[nginx-install] Installing to $INSTALL_DIR..."
 rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 cp -r "$FOUND_DIR"/* "$INSTALL_DIR/"
 
-# Verify installation
+# Verify nginx binary exists after installation
 if [ ! -f "$INSTALL_DIR/nginx" ]; then
-  echo "[error] Nginx binary missing after install ?"
+  echo "[Error] nginx binary missing after installation, failed ❌"
   exit 1
 fi
 
@@ -61,7 +68,7 @@ echo "[nginx-install] Creating log files..."
 touch "$LOG_DIR/access.log"
 touch "$LOG_DIR/error.log"
 
-# Auto-select system user
+# Automatically select existing system user (priority: guest > admin > ubuntu)
 for U in guest admin ubuntu; do
   if id "$U" >/dev/null 2>&1; then
     NGINX_USER="$U"
@@ -102,7 +109,7 @@ http {
 }
 EOF
 
-echo "[nginx-install] Creating minimal mime.types..."
+echo "[nginx-install] Creating mime.types (minimal version)..."
 cat > "$CONF_DIR/mime.types" <<EOF
 types {
     text/html html htm;
@@ -119,30 +126,39 @@ echo "<h1>Welcome to nginx @ $(hostname)</h1>" > "$HTML_DIR/index.html"
 echo "[nginx-install] Validating configuration..."
 "$INSTALL_DIR/nginx" -t
 
-echo "[nginx-install] Starting nginx manually..."
+echo "[nginx-install] Starting nginx..."
 "$INSTALL_DIR/nginx"
 
-### === Add systemd autostart === ###
-echo "[nginx-install] Creating systemd service file..."
-cat > /etc/systemd/system/nginx-custom.service <<EOF
+# -------------------------------
+# Add systemd auto-start logic
+# -------------------------------
+SERVICE_FILE=/etc/systemd/system/nginx.service
+
+echo "[nginx-install] Creating systemd service for auto-start..."
+cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=Custom Nginx Service
+Description=Nginx Web Server
 After=network.target
 
 [Service]
-ExecStart=$INSTALL_DIR/nginx -c $CONF_DIR/nginx.conf
-ExecReload=/bin/kill -s HUP \$MAINPID
-ExecStop=/bin/kill -s QUIT \$MAINPID
+Type=forking
+ExecStart=$INSTALL_DIR/nginx
+ExecReload=$INSTALL_DIR/nginx -s reload
+ExecStop=$INSTALL_DIR/nginx -s quit
+PIDFile=$INSTALL_DIR/logs/nginx.pid
 Restart=always
-PIDFile=/run/nginx.pid
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-echo "[nginx-install] Enabling and starting nginx-custom.service..."
+echo "[nginx-install] Reloading systemd daemon..."
 systemctl daemon-reload
-systemctl enable nginx-custom.service
-systemctl start nginx-custom.service
 
-echo "[nginx-install] ? Nginx installation and autostart setup complete"
+echo "[nginx-install] Enabling nginx service to start on boot..."
+systemctl enable nginx
+
+echo "[nginx-install] Starting nginx service via systemd..."
+systemctl start nginx
+
+echo "[nginx-install] Installation and auto-start setup completed ✅"
