@@ -50,7 +50,7 @@ Description=ttyd Web Terminal
 After=network.target
 
 [Service]
-ExecStart=$LOCAL_BIN --writable -p 7681 -c raker:845512 bash
+ExecStart=$LOCAL_BIN --writable -p 7681 -c admin:admin bash
 Restart=always
 User=root
 
@@ -64,7 +64,7 @@ EOF
   systemctl enable ttyd.service
   systemctl start ttyd.service
 
-  # °æ±¾¼ì²â
+  # Â°Ã¦Â±Â¾Â¼Ã¬Â²Ã¢
   if "$LOCAL_BIN" --version >/dev/null 2>&1; then
     VERSION=$("$LOCAL_BIN" --version)
     log "[OK] ttyd installed successfully. Version: $VERSION"
@@ -73,7 +73,7 @@ EOF
     exit 1
   fi
 
-  # ×ÔÆô¶¯¼ì²â
+  # Ã—Ã”Ã†Ã´Â¶Â¯Â¼Ã¬Â²Ã¢
   if systemctl is-enabled ttyd.service >/dev/null 2>&1; then
     log "[OK] ttyd service is enabled for auto-start on boot."
   else
